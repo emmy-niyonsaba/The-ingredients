@@ -1,11 +1,10 @@
 import React from 'react'
+import Header from './components/Header'
 
 function App() {
   return (
    <>
-   
-   <h1 className=' text-amber-200'>Hello world</h1>
-   
+      <Header></Header>
    </>
   )
 }
