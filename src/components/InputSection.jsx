@@ -33,7 +33,8 @@ const InputSection = () => {
                  placeholder=' e.g Agatogo' 
                  className=' p-3 rounded-md  border-gray-500 border-2' />
 
-                 <button 
+                 <button
+                 type='submit' 
                  className=' p-3 rounded-md bg-blue-500 text-white'>+Add ingredient
                  
                  </button>
