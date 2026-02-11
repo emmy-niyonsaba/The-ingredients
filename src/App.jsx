@@ -1,10 +1,12 @@
 import React from 'react'
 import Header from './components/Header'
+import InputSection from './components/InputSection'
 
 function App() {
   return (
    <>
-      <Header></Header>
+      <Header/>
+      <InputSection/>
    </>
   )
 }
