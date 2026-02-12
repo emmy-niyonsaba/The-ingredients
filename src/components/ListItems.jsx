@@ -3,7 +3,7 @@ function ListItems({ ingredients }) {
         <div className="max-w-2xl mx-auto mt-10 bg-white shadow-xl rounded-2xl p-8 border border-gray-100">
 
             <h1 className="text-3xl font-bold text-gray-800 mb-6 border-b pb-3">
-                🥗 Ingredients in Hand
+                Ingredients in Hand
             </h1>
 
             <ul className="space-y-3">
