@@ -1,40 +1,108 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 
-const Result = () => {
+const Result = ({ ingredients = [], onClose }) => {
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const [recipe, setRecipe] = useState(null)
+
+  useEffect(() => {
+    if (!ingredients || ingredients.length === 0) return
+
+    const controller = new AbortController()
+    const fetchRecipe = async () => {
+      setLoading(true)
+      setError(null)
+      setRecipe(null)
+      try {
+        const prompt = `You are a helpful chef. Create a clear, concise recipe using ONLY the provided ingredients. Do NOT add any new ingredients. If absolutely necessary, you may add at most ONE essential staple (salt OR pepper OR oil) and explicitly mark it in the ingredients list as "added staple". Return ONLY valid JSON with keys: title, ingredients (array), instructions (array of steps), notes (short). Ingredients list: ${JSON.stringify(ingredients)}.`
+
+        const res = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [
+              { role: 'system', content: 'You are a professional chef and recipe writer.' },
+              { role: 'user', content: prompt },
+            ],
+            max_tokens: 800,
+            temperature: 0.6,
+          }),
+          signal: controller.signal,
+        })
+
+        if (!res.ok) {
+          const text = await res.text()
+          throw new Error(`OpenAI error: ${res.status} ${text}`)
+        }
+
+        const data = await res.json()
+        const content = data?.choices?.[0]?.message?.content || ''
+
+        let parsed = null
+        try {
+          parsed = JSON.parse(content)
+        } catch (e) {
+          // If model didn't return strict JSON, wrap as text
+          parsed = { text: content }
+        }
+
+        setRecipe(parsed)
+      } catch (err) {
+        if (err.name !== 'AbortError') setError(err.message || 'Unknown error')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchRecipe()
+    return () => controller.abort()
+  }, [ingredients])
+
   return (
-    <div>
-      <section>
-       <h2>Chef Claude Recommends:</h2>
-                <article className="suggested-recipe-container" aria-live="polite">
-                    <p>Based on the ingredients you have available, I would recommend making a simple a delicious <strong>Beef Bolognese Pasta</strong>. Here is the recipe:</p>
-                    <h3>Beef Bolognese Pasta</h3>
-                    <strong>Ingredients:</strong>
-                    <ul>
-                        <li>1 lb. ground beef</li>
-                        <li>1 onion, diced</li>
-                        <li>3 cloves garlic, minced</li>
-                        <li>2 tablespoons tomato paste</li>
-                        <li>1 (28 oz) can crushed tomatoes</li>
-                        <li>1 cup beef broth</li>
-                        <li>1 teaspoon dried oregano</li>
-                        <li>1 teaspoon dried basil</li>
-                        <li>Salt and pepper to taste</li>
-                        <li>8 oz pasta of your choice (e.g., spaghetti, penne, or linguine)</li>
-                    </ul>
-                    <strong>Instructions:</strong>
-                    <ol>
-                        <li>Bring a large pot of salted water to a boil for the pasta.</li>
-                        <li>In a large skillet or Dutch oven, cook the ground beef over medium-high heat, breaking it up with a wooden spoon, until browned and cooked through, about 5-7 minutes.</li>
-                        <li>Add the diced onion and minced garlic to the skillet and cook for 2-3 minutes, until the onion is translucent.</li>
-                        <li>Stir in the tomato paste and cook for 1 minute.</li>
-                        <li>Add the crushed tomatoes, beef broth, oregano, and basil. Season with salt and pepper to taste.</li>
-                        <li>Reduce the heat to low and let the sauce simmer for 15-20 minutes, stirring occasionally, to allow the flavors to meld.</li>
-                        <li>While the sauce is simmering, cook the pasta according to the package instructions. Drain the pasta and return it to the pot.</li>
-                        <li>Add the Bolognese sauce to the cooked pasta and toss to combine.</li>
-                        <li>Serve hot, garnished with additional fresh basil or grated Parmesan cheese if desired.</li>
-                    </ol>
-                </article>
-            </section>
+    <div className="max-w-2xl mx-auto mt-10 bg-white shadow-xl rounded-2xl p-8 border border-gray-100">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-2xl font-bold">AI-generated Recipe</h2>
+        <button onClick={onClose} className="text-sm text-gray-600 hover:underline">Close</button>
+      </div>
+
+      {loading && <p>Generating recipe from your ingredients…</p>}
+      {error && <p className="text-red-500">Error: {error}</p>}
+
+      {!loading && recipe && (
+        <article aria-live="polite">
+          {recipe.title && <h3 className="text-xl font-semibold">{recipe.title}</h3>}
+
+          {Array.isArray(recipe.ingredients) ? (
+            <>
+              <strong>Ingredients:</strong>
+              <ul className="list-disc ml-6 mb-3">
+                {recipe.ingredients.map((ing, i) => (
+                  <li key={i}>{ing}</li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            recipe.text && <pre className="whitespace-pre-wrap">{recipe.text}</pre>
+          )}
+
+          {Array.isArray(recipe.instructions) && (
+            <>
+              <strong>Instructions:</strong>
+              <ol className="list-decimal ml-6">
+                {recipe.instructions.map((step, i) => (
+                  <li key={i} className="mb-1">{step}</li>
+                ))}
+              </ol>
+            </>
+          )}
+
+          {recipe.notes && <p className="mt-3 text-sm text-gray-600">Notes: {recipe.notes}</p>}
+        </article>
+      )}
     </div>
   )
 }

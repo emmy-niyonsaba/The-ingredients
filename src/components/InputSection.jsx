@@ -54,7 +54,7 @@ const InputSection = () => {
                         <p>Generate a recipe from your list of ingredients.</p>
                     </div>
                     <button className=' bg-blue-500 p-3 rounded-[13px] text-white font-medium' onClick={() => {
-                        setIsshow(!isshown)
+                        setIsshow(true)
                     }}>Get a recipe</button>
 
 
@@ -62,9 +62,9 @@ const InputSection = () => {
             ) : null}
 
 
-            {isshown?(
-                <Result></Result>
-            ):null}
+            {isshown ? (
+                <Result ingredients={ingredient} onClose={() => setIsshow(false)} />
+            ) : null}
 
         </>
 

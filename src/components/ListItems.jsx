@@ -18,7 +18,7 @@ function ListItems({ ingredients, setIngredients }) {
             <ul className="space-y-3">
                 {ingredients.map((ingredient, index) => (
                     <li
-                        key={ingredient}
+                        key={index}
                         onClick={() => deleteIngredient(index)}
                         className="flex items-center gap-3 text-lg text-gray-700 bg-gray-50 hover:bg-red-50 cursor-pointer transition-colors duration-200 px-4 py-3 rounded-lg shadow-sm"
                     >
